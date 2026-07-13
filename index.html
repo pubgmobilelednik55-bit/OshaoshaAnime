@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZcAnimeBot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: #0a0a0c; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(20, 20, 25, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .premium-border { border: 1px solid rgba(167, 139, 250, 0.2); }
+        
+        /* Loader */
+        .loader-screen { position: fixed; inset: 0; background: #0a0a0c; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .loader-circle { width: 40px; height: 40px; border: 2px solid #1e1e24; border-top: 2px solid #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Smooth Transitions */
+        .page { transition: opacity 0.4s ease, transform 0.4s ease; }
+        .hidden { display: none; opacity: 0; transform: translateY(10px); }
+        
+        .nav-item { transition: 0.3s; color: #64748b; }
+        .nav-item.active { color: #a78bfa; }
+        
+        .anime-card { background: #16161e; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); }
+        .status-tag { font-size: 9px; padding: 2px 8px; border-radius: 4px; font-weight: 800; text-transform: uppercase; }
+    </style>
+</head>
+<body class="pb-24 overflow-x-hidden">
+
+    <!-- LOADING SCREEN -->
+    <div id="loader" class="loader-screen">
+        <div class="loader-circle"></div>
+        <p class="mt-4 text-gray-500 font-medium tracking-widest text-sm">YUKLANMOQDA...</p>
+    </div>
+
+    <!-- HEADER -->
+    <header class="p-5 flex items-center justify-between sticky top-0 z-50 glass">
+        <div class="flex items-center gap-3">
+            <img id="u-pic" src="" class="w-10 h-10 rounded-full border border-purple-500/50 object-cover">
+            <div>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Salom 👋</p>
+                <h1 id="u-name" class="font-extrabold text-sm text-white">User</h1>
+            </div>
+        </div>
+        <div id="badge"></div>
+    </header>
+
+    <main class="p-4" id="content">
+        
+        <!-- ASOSIY -->
+        <section id="sec-home" class="page">
+            <h2 class="text-xs font-black text-purple-500 uppercase tracking-widest mb-4">Top Animelar</h2>
+            <div id="top-list" class="grid grid-cols-2 gap-3 mb-8">
+                <p class="col-span-2 text-center text-gray-600 py-10 text-xs">Animelar yuklanmagan 😢</p>
+            </div>
+            <h2 class="text-xs font-black text-purple-500 uppercase tracking-widest mb-4">Yangi qo'shilganlar</h2>
+            <div id="new-list" class="space-y-3"></div>
+        </section>
+
+        <!-- QOIDA -->
+        <section id="sec-rules" class="page hidden">
+            <div class="glass p-8 rounded-2xl premium-border">
+                <h2 class="text-lg font-black mb-6 text-purple-400">Bot Qoidalari</h2>
+                <div class="text-sm text-gray-400 leading-relaxed space-y-4">
+                    <p>Salom siz anime botdasiz sizga muxim qoida unitmang</p>
+                    <p class="text-red-500 font-bold italic">Adminga soxta chek tashlamang!</p>
+                    <p>Siz oziz xoxlagan animeni bepul korasiz bazgi animelar pullik lekin arzon shuni ustidan shikoyat qilish mumkin to'gri lekin bu joyda siz adminga sokib yozmang pullik yoki boshqa masala boyicha yozmang bu bot agar togri maqsadda foydalansangiz sizga tekinga beriladi 🎁</p>
+                    <div class="pt-6 border-t border-white/5">
+                        <p class="text-white font-bold">Xurmat bilan Zakka Jamosi</p>
+                        <p class="text-purple-500">Coder: @ZcCoder | @CDXmc</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- S+ PREMIUM -->
+        <section id="sec-premium" class="page hidden">
+            <h2 class="text-center text-2xl font-black text-white mb-2">S+ PREMIUM</h2>
+            <p class="text-center text-gray-500 text-xs mb-8">Eksklyuziv kontentga yo'l oching</p>
+            
+            <div class="space-y-4">
+                <div onclick="openPay(20000, '1 oy')" class="glass p-6 rounded-2xl flex justify-between items-center premium-border">
+                    <div><h3 class="font-bold">1 Oylik S+</h3><p class="text-xs text-gray-500">20,000 so'm</p></div>
+                    <i class="fas fa-arrow-right text-purple-500"></i>
+                </div>
+                <div onclick="openPay(50000, '6 oy')" class="glass p-6 rounded-2xl flex justify-between items-center border border-purple-500">
+                    <div><h3 class="font-bold">6 Oylik S+</h3><p class="text-xs text-purple-400">50,000 so'm (Tejamkor)</p></div>
+                    <i class="fas fa-crown text-yellow-500"></i>
+                </div>
+            </div>
+
+            <div id="pay-modal" class="hidden fixed inset-0 z-[100] glass flex items-center justify-center p-6">
+                <div class="bg-[#16161e] p-8 rounded-3xl w-full border border-white/5">
+                    <h2 class="text-xl font-bold mb-6 text-center">To'lov Ma'lumotlari</h2>
+                    <div class="space-y-3 mb-8 text-sm text-gray-400 font-mono">
+                        <p class="flex justify-between"><span>Karta:</span> <span class="text-white">4916990355543858</span></p>
+                        <p class="flex justify-between"><span>Ega:</span> <span class="text-white">Xodjimova Sh.</span></p>
+                        <p class="flex justify-between"><span>Tel:</span> <span class="text-white">+998932567801</span></p>
+                    </div>
+                    <button onclick="confirmPay()" class="w-full bg-purple-600 py-4 rounded-xl font-bold mb-2">To'lov qildim</button>
+                    <button onclick="closePay()" class="w-full text-gray-500 text-sm font-medium py-2">Bekor qilish</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PROFIL -->
+        <section id="sec-profile" class="page hidden">
+            <div class="flex flex-col items-center">
+                <div class="relative mb-6">
+                    <img id="u-pic-big" src="" class="w-24 h-24 rounded-full border-2 border-purple-500 p-1">
+                    <div id="u-badge" class="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap"></div>
+                </div>
+                <h2 id="u-name-big" class="text-xl font-black mb-1">User</h2>
+                <p id="u-status" class="text-gray-500 text-xs mb-8 uppercase tracking-widest">Free Account</p>
+                
+                <div class="w-full space-y-3">
+                    <button onclick="tg.openTelegramLink('https://t.me/ZcCoder')" class="w-full glass p-4 rounded-xl font-bold flex items-center justify-center gap-3">
+                        <i class="fab fa-telegram-plane"></i> Admin bilan bog'lanish
+                    </button>
+                    <button onclick="tg.openTelegramLink('https://t.me/ZcAnimeNews')" class="w-full glass p-4 rounded-xl font-bold flex items-center justify-center gap-3">
+                        <i class="fas fa-bullhorn"></i> Yangiliklar kanali
+                    </button>
+                    <button id="admin-panel-btn" onclick="nav('admin')" class="hidden w-full bg-red-900/20 text-red-500 p-4 rounded-xl font-black mt-10 border border-red-500/20">
+                        🛡️ ADMIN PANEL
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ADMIN PANEL -->
+        <section id="sec-admin" class="page hidden">
+            <h2 class="text-lg font-bold mb-6">Yangi Anime Qo'shish</h2>
+            <div class="space-y-4">
+                <input id="a-title" placeholder="Anime nomi" class="w-full glass p-4 rounded-xl outline-none text-sm">
+                <input id="a-thumb" placeholder="Thumbnail URL" class="w-full glass p-4 rounded-xl outline-none text-sm">
+                <input id="a-video" placeholder="Video URL" class="w-full glass p-4 rounded-xl outline-none text-sm">
+                <textarea id="a-desc" placeholder="Tavsif..." class="w-full glass p-4 rounded-xl outline-none text-sm h-32"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="addAnime('free')" class="flex-1 bg-gray-800 p-4 rounded-xl font-bold text-xs uppercase">Barcha uchun</button>
+                    <button onclick="addAnime('premium')" class="flex-1 bg-purple-600 p-4 rounded-xl font-bold text-xs uppercase">Faqat S+ uchun</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 h-20 glass flex justify-around items-center border-t border-white/5 px-2">
+        <button onclick="nav('home')" id="n-home" class="nav-item flex flex-col items-center gap-1 active"><i class="fas fa-th-large text-lg"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Asosiy</span></button>
+        <button onclick="nav('rules')" id="n-rules" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-shield-alt text-lg"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Qoida</span></button>
+        <button onclick="nav('premium')" id="n-premium" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-crown text-lg"></i><span class="text-[9px] font-bold uppercase tracking-tighter">S+ Olish</span></button>
+        <button onclick="nav('profile')" id="n-profile" class="nav-item flex flex-col items-center gap-1"><i class="fas fa-user text-lg"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Profil</span></button>
+    </nav>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        const user = tg.initDataUnsafe.user || { id: 12345, first_name: 'Mehmon' };
+        const ADMIN_ID = 8683151446;
+
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.display = 'none';
+                loadData();
+            }, 4000);
+
+            document.getElementById('u-name').innerText = user.first_name;
+            document.getElementById('u-name-big').innerText = user.first_name;
+            if(user.photo_url) {
+                document.getElementById('u-pic').src = user.photo_url;
+                document.getElementById('u-pic-big').src = user.photo_url;
+            }
+            if(user.id === ADMIN_ID) document.getElementById('admin-panel-btn').classList.remove('hidden');
+        };
+
+        async function loadData() {
+            const res = await fetch(`/api/data?userId=${user.id}`);
+            const data = await res.json();
+            
+            const isSPlus = data.user.status === 's+';
+            document.getElementById('badge').innerHTML = isSPlus ? '<span class="status-tag bg-purple-600 text-white">S+ Premium</span>' : '<span class="status-tag bg-gray-800 text-gray-500">Free</span>';
+            document.getElementById('u-badge').innerHTML = isSPlus ? '<span class="status-tag bg-purple-600 text-white">S+ Account</span>' : '';
+            document.getElementById('u-status').innerText = isSPlus ? 'S+ Premium Account' : 'Free Account';
+
+            const list = document.getElementById('new-list');
+            list.innerHTML = data.animes.length ? '' : '<p class="text-center text-gray-600 py-10 text-xs">Animelar yuklanmagan 😢</p>';
+            
+            data.animes.forEach(a => {
+                list.innerHTML += `
+                    <div class="anime-card flex gap-4 p-3 items-center">
+                        <img src="${a.thumb}" class="w-20 h-28 object-cover rounded-lg shadow-xl">
+                        <div class="flex-1">
+                            <span class="status-tag ${a.type === 'premium' ? 'text-yellow-500' : 'text-green-500'}">${a.type}</span>
+                            <h3 class="font-bold text-sm text-white mt-1 mb-2">${a.title}</h3>
+                            <button class="bg-white/5 border border-white/5 w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest">Tomosha qilish</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function nav(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('sec-' + page).classList.remove('hidden');
+            document.getElementById('n-' + page)?.classList.add('active');
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        async function addAnime(type) {
+            const anime = {
+                title: document.getElementById('a-title').value,
+                thumb: document.getElementById('a-thumb').value,
+                videoUrl: document.getElementById('a-video').value,
+                desc: document.getElementById('a-desc').value,
+                type: type
+            };
+            await fetch('/api/add-anime', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(anime)
+            });
+            tg.showAlert("Anime muvaffaqiyatli qo'shildi!");
+            loadData();
+            nav('home');
+        }
+
+        function openPay(sum, plan) {
+            window.selectedPlan = plan;
+            document.getElementById('pay-modal').classList.remove('hidden');
+        }
+
+        function closePay() {
+            document.getElementById('pay-modal').classList.add('hidden');
+        }
+
+        function confirmPay() {
+            const btn = event.target;
+            btn.innerHTML = `<i class="fas fa-clock animate-spin"></i> Tekshirilmoqda...`;
+            fetch('/api/pay', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ userId: user.id, name: user.first_name, plan: window.selectedPlan })
+            });
+            setTimeout(() => {
+                closePay();
+                tg.showPopup({ title: "Yuborildi", message: "Buyurtmangiz tekshirilmoqda..." });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
